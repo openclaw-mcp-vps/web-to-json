@@ -1,53 +1,75 @@
-import { jwtVerify, SignJWT } from "jose";
+import { createHmac, timingSafeEqual } from "crypto";
 
-export const ACCESS_COOKIE_NAME = "w2j_access";
-export const ACCESS_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 30;
+export const ACCESS_COOKIE_NAME = "webtojson_access";
+const TOKEN_SEPARATOR = ".";
 
-export type AccessTokenPayload = {
-  email: string;
-  plan: "unlimited" | "metered";
-};
-
-function getSecretKey() {
-  const secret =
-    process.env.ACCESS_COOKIE_SECRET ??
-    process.env.LEMON_SQUEEZY_WEBHOOK_SECRET ??
-    "dev-only-change-this-secret-before-production";
-
-  return new TextEncoder().encode(secret);
+function getAccessSecret() {
+  return (
+    process.env.ACCESS_COOKIE_SECRET ||
+    process.env.STRIPE_WEBHOOK_SECRET ||
+    "local-dev-access-secret"
+  );
 }
 
-export async function signAccessToken(payload: AccessTokenPayload) {
-  return await new SignJWT(payload)
-    .setProtectedHeader({ alg: "HS256" })
-    .setSubject(payload.email)
-    .setIssuedAt()
-    .setExpirationTime(`${ACCESS_COOKIE_MAX_AGE_SECONDS}s`)
-    .sign(getSecretKey());
+function toBase64Url(buffer: Buffer) {
+  return buffer
+    .toString("base64")
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/g, "");
 }
 
-export async function verifyAccessToken(token: string) {
-  try {
-    const { payload } = await jwtVerify(token, getSecretKey(), {
-      algorithms: ["HS256"]
-    });
+function fromBase64Url(value: string) {
+  const normalized = value.replace(/-/g, "+").replace(/_/g, "/");
+  const padLength = (4 - (normalized.length % 4)) % 4;
+  return Buffer.from(normalized + "=".repeat(padLength), "base64");
+}
 
-    const email = payload.email;
-    const plan = payload.plan;
+function createSignature(sessionId: string) {
+  const digest = createHmac("sha256", getAccessSecret())
+    .update(sessionId)
+    .digest();
+  return toBase64Url(digest);
+}
 
-    if (typeof email !== "string") {
-      return null;
-    }
+export function createAccessToken(sessionId: string) {
+  return `${sessionId}${TOKEN_SEPARATOR}${createSignature(sessionId)}`;
+}
 
-    if (plan !== "unlimited" && plan !== "metered") {
-      return null;
-    }
-
-    return {
-      email,
-      plan
-    } as AccessTokenPayload;
-  } catch {
+export function verifyAccessToken(value?: string | null) {
+  if (!value) {
     return null;
   }
+
+  const [sessionId, providedSignature] = value.split(TOKEN_SEPARATOR);
+
+  if (!sessionId || !providedSignature) {
+    return null;
+  }
+
+  const expectedSignature = createSignature(sessionId);
+  const providedBuffer = fromBase64Url(providedSignature);
+  const expectedBuffer = fromBase64Url(expectedSignature);
+
+  if (providedBuffer.length !== expectedBuffer.length) {
+    return null;
+  }
+
+  if (!timingSafeEqual(providedBuffer, expectedBuffer)) {
+    return null;
+  }
+
+  return sessionId;
+}
+
+export function getAccessCookieOptions() {
+  const oneMonthInSeconds = 60 * 60 * 24 * 30;
+
+  return {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax" as const,
+    path: "/",
+    maxAge: oneMonthInSeconds,
+  };
 }

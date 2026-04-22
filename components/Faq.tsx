@@ -1,42 +1,46 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
-const faq = [
+const FAQ_ITEMS = [
   {
-    question: "Do I need to provide selectors or XPaths?",
+    question: "How is this different from web-access skills?",
     answer:
-      "No. Send a URL and Web-to-JSON returns structured output with summary, key points, entities, facts, and links."
+      "web-access style skills are built for conversational agents. Web-to-JSON is an API-first service designed for production pipelines and automation jobs.",
   },
   {
-    question: "Will this work on SPAs and dynamic pages?",
+    question: "Do I need to maintain selectors?",
     answer:
-      "Yes. Requests are rendered with Puppeteer first, then extraction runs on visible page content, not raw HTML alone."
+      "No. You send only the URL. The extractor renders the page, captures the meaningful content, and returns normalized JSON without CSS selector maintenance.",
   },
   {
-    question: "How does paid access work?",
+    question: "Can it handle SPAs and delayed content?",
     answer:
-      "After purchase, Lemon Squeezy sends a webhook. Enter the same purchase email to activate an access cookie used by /api/extract."
+      "Yes. Puppeteer executes client-side JavaScript, waits for network idle, and scrolls to trigger lazy-loaded sections before extraction.",
   },
   {
-    question: "What if no AI key is configured?",
+    question: "How does paid access work with Stripe Payment Link?",
     answer:
-      "The API still works with deterministic extraction so you can ship immediately, then enable OpenAI or Anthropic later for richer results."
-  }
+      "After checkout, Stripe sends a webhook event with the checkout session ID. The success page exchanges that session ID for an httpOnly cookie that unlocks the protected tool and API endpoint.",
+  },
+  {
+    question: "What should I configure in Stripe?",
+    answer:
+      "Set your payment link's success URL to `/success?session_id={CHECKOUT_SESSION_ID}` so buyers can be unlocked automatically after payment.",
+  },
 ];
 
 export function Faq() {
   return (
-    <section className="mx-auto max-w-6xl px-6 py-16">
-      <h2 className="mb-8 text-center text-3xl font-semibold sm:text-4xl">FAQ</h2>
-      <div className="grid gap-4 md:grid-cols-2">
-        {faq.map((item) => (
-          <Card key={item.question}>
-            <CardHeader>
-              <CardTitle className="text-lg">{item.question}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted">{item.answer}</p>
-            </CardContent>
-          </Card>
+    <section id="faq" className="space-y-5">
+      <h2 className="text-3xl font-semibold tracking-tight text-[#f0f6fc]">Frequently Asked Questions</h2>
+      <div className="space-y-3">
+        {FAQ_ITEMS.map((item) => (
+          <details
+            key={item.question}
+            className="rounded-lg border border-[#30363d] bg-[#0f1722]/60 p-4 open:border-[#2f81f7]/50"
+          >
+            <summary className="cursor-pointer list-none text-base font-semibold text-[#f0f6fc]">
+              {item.question}
+            </summary>
+            <p className="mt-3 text-sm leading-relaxed text-[#8b949e]">{item.answer}</p>
+          </details>
         ))}
       </div>
     </section>

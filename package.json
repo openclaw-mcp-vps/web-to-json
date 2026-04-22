@@ -6,31 +6,28 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "eslint"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.66.0",
-    "@lemonsqueezy/lemonsqueezy.js": "^4.0.0",
+    "@anthropic-ai/sdk": "^0.55.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "jose": "^5.9.6",
     "next": "15.5.15",
-    "openai": "^6.2.0",
-    "puppeteer": "^24.9.0",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "tailwind-merge": "^3.3.0",
-    "zod": "^3.24.1"
+    "openai": "^6.3.0",
+    "puppeteer": "^24.10.2",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "stripe": "^18.1.1",
+    "tailwind-merge": "^3.3.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.4",
-    "@types/node": "^22.10.2",
-    "@types/react": "^19.0.2",
-    "@types/react-dom": "^19.0.2",
-    "eslint": "^9.18.0",
+    "@types/node": "^20.17.57",
+    "@types/react": "^19.2.2",
+    "@types/react-dom": "^19.2.2",
+    "eslint": "^9.38.0",
     "eslint-config-next": "15.5.15",
-    "postcss": "^8.4.49",
     "tailwindcss": "^4.1.4",
-    "typescript": "^5.7.2"
+    "typescript": "^5.9.3"
   }
 }

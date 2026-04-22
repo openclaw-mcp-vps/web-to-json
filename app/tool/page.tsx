@@ -1,47 +1,57 @@
 import Link from "next/link";
-import { cookies } from "next/headers";
-import { ToolConsole } from "@/components/ToolConsole";
-import { ACCESS_COOKIE_NAME, verifyAccessToken } from "@/lib/auth";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-export default async function ToolPage() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get(ACCESS_COOKIE_NAME)?.value;
-  const access = token ? await verifyAccessToken(token) : null;
+import { ApiDocs } from "@/components/ApiDocs";
+import { ExtractorForm } from "@/components/ExtractorForm";
 
-  if (!access) {
-    return (
-      <main className="mx-auto max-w-4xl px-6 py-20">
-        <Card>
-          <CardHeader>
-            <CardTitle>Extractor is behind the paywall</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3 text-sm text-muted">
-            <p>
-              Purchase Unlimited, then activate access with your checkout email to unlock
-              <code> /api/extract</code> and this live console.
-            </p>
-            <p>
-              <Link href="/" className="text-[#58a6ff] hover:text-[#79c0ff]">
-                Return to pricing and activation
-              </Link>
-            </p>
-          </CardContent>
-        </Card>
-      </main>
-    );
-  }
+export const metadata = {
+  title: "Extractor Tool",
+  description: "Paid extractor console for Web-to-JSON.",
+};
+
+export default function ToolPage() {
+  const paymentLink = process.env.NEXT_PUBLIC_STRIPE_PAYMENT_LINK ?? "#";
 
   return (
-    <main className="mx-auto max-w-5xl px-6 py-12">
-      <div className="mb-6 space-y-2">
-        <h1 className="text-3xl font-semibold">Web-to-JSON Extractor</h1>
-        <p className="text-sm text-muted">
-          Access granted for <span className="text-foreground">{access.email}</span>. Use this
-          console to test URLs, then call the API directly from your app.
-        </p>
-      </div>
-      <ToolConsole />
+    <main className="mx-auto flex min-h-screen w-full max-w-5xl flex-col gap-8 px-4 py-8 sm:px-6 sm:py-10">
+      <header className="flex flex-wrap items-center justify-between gap-4 border-b border-[#21262d] pb-5">
+        <div>
+          <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#79c0ff]">Private Tool</p>
+          <h1 className="mt-2 text-3xl font-semibold tracking-tight text-[#f0f6fc]">Live URL → JSON Extractor</h1>
+          <p className="mt-2 max-w-2xl text-sm text-[#8b949e]">
+            This route is gated by secure cookie access. Submit any URL and get structured JSON from rendered content.
+          </p>
+        </div>
+
+        <div className="flex gap-2">
+          <Link
+            href="/"
+            className="rounded-md border border-[#30363d] px-3 py-2 text-sm font-semibold text-[#c9d1d9] hover:border-[#2f81f7]"
+          >
+            Back to Landing
+          </Link>
+          <a
+            href={paymentLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="rounded-md bg-[#2f81f7] px-3 py-2 text-sm font-semibold text-white hover:bg-[#1f6feb]"
+          >
+            Buy Access
+          </a>
+        </div>
+      </header>
+
+      <ExtractorForm paymentLink={paymentLink} />
+
+      <section className="rounded-xl border border-[#30363d] bg-[#0f1722]/70 p-4 sm:p-6">
+        <h2 className="text-xl font-semibold text-[#f0f6fc]">Best Practices</h2>
+        <ul className="mt-3 space-y-2 text-sm text-[#8b949e]">
+          <li>- Use canonical URLs when possible to avoid duplicate content extraction.</li>
+          <li>- Retry pages that are timing-sensitive or geo-blocked to improve output coverage.</li>
+          <li>- Keep your downstream parser resilient to optional/null fields.</li>
+        </ul>
+      </section>
+
+      <ApiDocs />
     </main>
   );
 }

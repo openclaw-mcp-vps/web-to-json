@@ -11,7 +11,7 @@ NICHE: data-extraction
 PRICE: $$0.01/page, $15/mo unlimited/mo
 
 ARCHITECTURE SPEC:
-A Next.js API service that accepts URLs via POST requests and returns clean JSON data using Puppeteer for web scraping and Claude/OpenAI for content extraction. Features a simple landing page with Lemon Squeezy integration for subscription billing.
+A Next.js API service that accepts URLs via POST requests and returns clean JSON data using Puppeteer for rendering and Claude/OpenAI for content extraction. Simple landing page with Lemon Squeezy integration for subscription management.
 
 PLANNED FILES:
 - pages/api/extract.js
@@ -19,13 +19,15 @@ PLANNED FILES:
 - pages/index.js
 - components/Hero.js
 - components/Pricing.js
-- lib/scraper.js
+- components/ApiDocs.js
+- lib/puppeteer.js
 - lib/ai-extractor.js
 - lib/auth.js
-- lib/database.js
+- lib/usage-tracker.js
+- lib/lemonsqueezy.js
 - middleware.js
 
-DEPENDENCIES: next, tailwindcss, puppeteer, openai, @anthropic-ai/sdk, @lemonsqueezy/lemonsqueezy.js, prisma, @prisma/client, next-auth, jose, zod
+DEPENDENCIES: next, tailwindcss, puppeteer, @anthropic-ai/sdk, openai, prisma, @prisma/client, next-auth, crypto, ratelimit, @lemonsqueezy/lemonsqueezy.js
 
 REQUIREMENTS:
 - Next.js 15 with App Router (app/ directory)
@@ -33,7 +35,7 @@ REQUIREMENTS:
 - Tailwind CSS v4
 - shadcn/ui components (npx shadcn@latest init, then add needed components)
 - Dark theme ONLY — background #0d1117, no light mode
-- Lemon Squeezy checkout overlay for payments
+- Stripe Payment Link for payments (hosted checkout — use the URL directly as the Buy button href)
 - Landing page that converts: hero, problem, solution, pricing, FAQ
 - The actual tool/feature behind a paywall (cookie-based access after purchase)
 - Mobile responsive
@@ -53,9 +55,13 @@ REQUIREMENTS:
   to package.json dependencies and re-run npm install + npm run build until it passes.
 
 ENVIRONMENT VARIABLES (create .env.example):
-- NEXT_PUBLIC_LEMON_SQUEEZY_STORE_ID
-- NEXT_PUBLIC_LEMON_SQUEEZY_PRODUCT_ID
-- LEMON_SQUEEZY_WEBHOOK_SECRET
+- NEXT_PUBLIC_STRIPE_PAYMENT_LINK  (full URL, e.g. https://buy.stripe.com/test_XXX)
+- NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY  (pk_test_... or pk_live_...)
+- STRIPE_WEBHOOK_SECRET  (set when webhook is wired)
+
+BUY BUTTON RULE: the Buy button's href MUST be `process.env.NEXT_PUBLIC_STRIPE_PAYMENT_LINK`
+used as-is — do NOT construct URLs from a product ID, do NOT prepend any base URL,
+do NOT wrap it in an embed iframe. The link opens Stripe's hosted checkout directly.
 
 After creating all files:
 1. Run: npm install
@@ -65,8 +71,3 @@ After creating all files:
 
 Do NOT use placeholder text. Write real, helpful content for the landing page
 and the tool itself. The tool should actually work and provide value.
-
-
-PREVIOUS ATTEMPT FAILED WITH:
-Codex timed out after 600s
-Please fix the above errors and regenerate.

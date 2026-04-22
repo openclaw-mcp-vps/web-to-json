@@ -1,75 +1,85 @@
 import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
-import { scrapePage } from "@/lib/scraper";
-import { extractStructuredData } from "@/lib/ai-extractor";
+
+import { extractStructuredJson } from "@/lib/ai-extractor";
 import { ACCESS_COOKIE_NAME, verifyAccessToken } from "@/lib/auth";
-import { logExtraction } from "@/lib/database";
+import { renderWebPage } from "@/lib/puppeteer";
+import { trackUsage } from "@/lib/usage-tracker";
 
 export const runtime = "nodejs";
-export const maxDuration = 60;
+export const maxDuration = 120;
 
-const bodySchema = z.object({
-  url: z.string().url(),
-  provider: z.enum(["auto", "openai", "anthropic"]).optional().default("auto")
-});
+function getClientIpAddress(request: NextRequest) {
+  const forwarded = request.headers.get("x-forwarded-for");
 
-function normalizeUrl(raw: string) {
-  const parsed = new URL(raw);
-
-  if (!["http:", "https:"].includes(parsed.protocol)) {
-    throw new Error("Only http and https URLs are supported.");
+  if (!forwarded) {
+    return "unknown";
   }
 
-  return parsed.toString();
+  return forwarded.split(",")[0]?.trim() || "unknown";
 }
 
 export async function POST(request: NextRequest) {
   const token = request.cookies.get(ACCESS_COOKIE_NAME)?.value;
+  const sessionId = verifyAccessToken(token);
 
-  if (!token) {
-    return NextResponse.json(
-      { message: "Paid access required. Purchase first, then activate your cookie." },
-      { status: 402 }
-    );
-  }
-
-  const access = await verifyAccessToken(token);
-
-  if (!access) {
-    return NextResponse.json(
-      { message: "Access cookie is invalid or expired. Re-activate access from the homepage." },
-      { status: 401 }
-    );
-  }
-
-  const parseResult = bodySchema.safeParse(await request.json().catch(() => null));
-
-  if (!parseResult.success) {
+  if (!sessionId) {
     return NextResponse.json(
       {
-        message: "Invalid request body. Expected { url: string, provider?: 'auto'|'openai'|'anthropic' }."
+        ok: false,
+        error: "Paid access required. Purchase and complete unlock first.",
       },
-      { status: 400 }
+      { status: 401 },
+    );
+  }
+
+  let body: { url?: string };
+
+  try {
+    body = (await request.json()) as { url?: string };
+  } catch {
+    return NextResponse.json(
+      {
+        ok: false,
+        error: "Invalid JSON payload.",
+      },
+      { status: 400 },
+    );
+  }
+
+  const inputUrl = body.url?.trim();
+
+  if (!inputUrl) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error: "Request body must include a non-empty url field.",
+      },
+      { status: 400 },
     );
   }
 
   try {
-    const url = normalizeUrl(parseResult.data.url);
-    const page = await scrapePage(url);
-    const data = await extractStructuredData(page, {
-      provider: parseResult.data.provider
+    const renderedPage = await renderWebPage(inputUrl);
+    const structured = await extractStructuredJson(renderedPage);
+
+    await trackUsage({
+      sessionId,
+      url: renderedPage.sourceUrl,
+      ipAddress: getClientIpAddress(request),
+      userAgent: request.headers.get("user-agent") || "unknown",
     });
 
-    await logExtraction({
-      email: access.email,
-      url,
-      provider: data.provider
+    return NextResponse.json({
+      ok: true,
+      data: structured,
     });
-
-    return NextResponse.json({ data });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Extraction failed.";
-
-    return NextResponse.json({ message }, { status: 500 });
+    return NextResponse.json(
+      {
+        ok: false,
+        error: (error as Error).message || "Extraction failed.",
+      },
+      { status: 500 },
+    );
   }
 }

@@ -1,0 +1,10 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="630" fill="#0D1117"/>
+  <rect x="70" y="70" width="1060" height="490" rx="28" fill="#111D2F" stroke="#2F81F7" stroke-opacity="0.45"/>
+  <circle cx="965" cy="160" r="180" fill="#2F81F7" fill-opacity="0.14"/>
+  <text x="120" y="240" fill="#79C0FF" font-family="Space Grotesk, sans-serif" font-size="42" font-weight="600" letter-spacing="6">DATA EXTRACTION API</text>
+  <text x="120" y="340" fill="#F0F6FC" font-family="Space Grotesk, sans-serif" font-size="86" font-weight="700">Web-to-JSON</text>
+  <text x="120" y="420" fill="#8B949E" font-family="IBM Plex Mono, monospace" font-size="34">Any URL into clean structured JSON in one API call</text>
+  <rect x="120" y="470" width="395" height="66" rx="10" fill="#2F81F7"/>
+  <text x="152" y="514" fill="white" font-family="Space Grotesk, sans-serif" font-size="32" font-weight="600">$0.01/page or $15/mo</text>
+</svg>

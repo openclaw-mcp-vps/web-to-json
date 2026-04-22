@@ -1,86 +1,71 @@
 import Link from "next/link";
+
+import { ApiDocs } from "@/components/ApiDocs";
+import { Faq } from "@/components/Faq";
 import { Hero } from "@/components/Hero";
 import { Pricing } from "@/components/Pricing";
-import { ProblemSolution } from "@/components/ProblemSolution";
-import { Faq } from "@/components/Faq";
-import { ActivateAccessForm } from "@/components/ActivateAccessForm";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Problem } from "@/components/Problem";
+import { Solution } from "@/components/Solution";
 
 type HomePageProps = {
-  searchParams: Promise<{ paywall?: string }>;
+  searchParams: Promise<{
+    locked?: string;
+  }>;
 };
 
-export default async function HomePage({ searchParams }: HomePageProps) {
+export default async function Home({ searchParams }: HomePageProps) {
   const params = await searchParams;
-  const showPaywallNotice = params.paywall === "1";
+  const paymentLink = process.env.NEXT_PUBLIC_STRIPE_PAYMENT_LINK ?? "#";
+  const isLockedRedirect = params.locked === "1";
 
   return (
-    <main>
-      {showPaywallNotice ? (
-        <div className="mx-auto mt-6 max-w-6xl rounded-md border border-[#d29922] bg-[#2d2108] px-4 py-3 text-sm text-[#f2cc60]">
-          The extractor is protected by paid access. Purchase a plan, then activate your cookie.
+    <div className="relative">
+      <div className="pointer-events-none absolute inset-x-0 top-[-300px] h-[560px] bg-[radial-gradient(circle_at_top,rgba(47,129,247,0.25),rgba(13,17,23,0))]" />
+
+      <header className="sticky top-0 z-40 border-b border-[#21262d] bg-[#0d1117]/90 backdrop-blur">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
+          <Link href="/" className="text-lg font-semibold tracking-tight text-[#f0f6fc]">
+            Web-to-JSON
+          </Link>
+          <nav className="hidden items-center gap-6 text-sm text-[#8b949e] md:flex">
+            <a href="#problem" className="hover:text-[#c9d1d9]">Problem</a>
+            <a href="#solution" className="hover:text-[#c9d1d9]">Solution</a>
+            <a href="#pricing" className="hover:text-[#c9d1d9]">Pricing</a>
+            <a href="#faq" className="hover:text-[#c9d1d9]">FAQ</a>
+          </nav>
+          <div className="flex items-center gap-2">
+            <Link
+              href="/tool"
+              className="rounded-md border border-[#30363d] px-3 py-2 text-xs font-semibold text-[#c9d1d9] hover:border-[#2f81f7] sm:text-sm"
+            >
+              Tool
+            </Link>
+            <a
+              href={paymentLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-md bg-[#2f81f7] px-3 py-2 text-xs font-semibold text-white hover:bg-[#1f6feb] sm:text-sm"
+            >
+              Buy
+            </a>
+          </div>
         </div>
-      ) : null}
-      <Hero />
-      <ProblemSolution />
+      </header>
 
-      <section className="mx-auto max-w-6xl px-6 py-8">
-        <Card>
-          <CardHeader>
-            <CardTitle>How it works</CardTitle>
-          </CardHeader>
-          <CardContent className="grid gap-5 text-sm text-muted md:grid-cols-3">
-            <div>
-              <p className="text-foreground">1. Send URL</p>
-              <p className="mt-1">
-                POST any public page URL to <code>/api/extract</code> with your paid-access
-                cookie.
-              </p>
-            </div>
-            <div>
-              <p className="text-foreground">2. Render + parse</p>
-              <p className="mt-1">
-                Headless Chromium loads the real page, including JavaScript-heavy SPAs.
-              </p>
-            </div>
-            <div>
-              <p className="text-foreground">3. Receive JSON</p>
-              <p className="mt-1">
-                You get structured data ready for agents, dashboards, automations, and ETL jobs.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      </section>
+      <main className="relative mx-auto flex w-full max-w-6xl flex-col gap-16 px-4 py-10 sm:px-6 sm:py-14">
+        {isLockedRedirect && (
+          <div className="rounded-lg border border-[#da3633]/50 bg-[#2d1212]/40 p-4 text-sm text-[#ffb4b4]">
+            Access is currently locked. Complete checkout first, then open your success URL to unlock the tool and API.
+          </div>
+        )}
 
-      <Pricing />
-
-      <section className="mx-auto max-w-3xl px-6 py-12">
-        <Card>
-          <CardHeader>
-            <CardTitle>Already purchased?</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted">
-              Enter the same email used at checkout. We will verify your Lemon Squeezy purchase,
-              set an access cookie, and unlock the extractor.
-            </p>
-            <ActivateAccessForm />
-            <p className="mt-4 text-sm">
-              <Link href="/tool" className="text-[#58a6ff] hover:text-[#79c0ff]">
-                Go directly to the extractor
-              </Link>
-            </p>
-          </CardContent>
-        </Card>
-      </section>
-
-      <Faq />
-
-      <footer className="mx-auto max-w-6xl px-6 py-12 text-center text-sm text-muted">
-        Web-to-JSON is designed for solo builders who need structured web data without selector
-        maintenance.
-      </footer>
-    </main>
+        <Hero paymentLink={paymentLink} />
+        <Problem />
+        <Solution />
+        <Pricing paymentLink={paymentLink} />
+        <ApiDocs />
+        <Faq />
+      </main>
+    </div>
   );
 }
